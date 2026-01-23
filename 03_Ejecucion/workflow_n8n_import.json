@@ -1,0 +1,67 @@
+{
+    "name": "SaaS Financiero - Cron Diario",
+    "nodes": [
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "days",
+                            "value": 1
+                        }
+                    ]
+                }
+            },
+            "id": "e7b0af4a-f597-48f8-8422-77764d85698b",
+            "name": "Schedule Trigger",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1,
+            "position": [
+                400,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "method": "GET",
+                "url": "https://ldxssygtrwkcyehhorye.supabase.co/rest/v1/configuracion?select=modo_automatico",
+                "authentication": "genericCredentialType",
+                "genericAuthType": "httpHeaderAuth",
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "apikey",
+                            "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxkeHNzeWd0cndrY3llaGhvcnllIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2ODkyODY2MywiZXhwIjoyMDg0NTA0NjYzfQ.uW9eqIB38_dUXUu7V9Vsq_g9a0hGbVh1nfavJYfheno"
+                        },
+                        {
+                            "name": "Authorization",
+                            "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxkeHNzeWd0cndrY3llaGhvcnllIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2ODkyODY2MywiZXhwIjoyMDg0NTA0NjYzfQ.uW9eqIB38_dUXUu7V9Vsq_g9a0hGbVh1nfavJYfheno"
+                        }
+                    ]
+                }
+            },
+            "id": "d8c2e1f4-a1b2-4c3d-bd5e-6f7g8h9i0j1k",
+            "name": "Consultar Supabase",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4,
+            "position": [
+                650,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Schedule Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Consultar Supabase",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "active": true
+}
