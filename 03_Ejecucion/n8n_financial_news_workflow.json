@@ -1,0 +1,87 @@
+{
+    "name": "Financial News Analysis Automation",
+    "nodes": [
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "minutes",
+                            "minutesInterval": 15
+                        }
+                    ]
+                }
+            },
+            "id": "7a3b1234-5678-4321-9abc-def012345678",
+            "name": "Schedule Trigger",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1.1,
+            "position": [
+                380,
+                240
+            ]
+        },
+        {
+            "parameters": {
+                "url": "https://search.cnbc.com/rs/search/view.xml?partnerId=2000&keywords=finance"
+            },
+            "id": "4b5c2345-6789-5432-0bcd-ef123456789a",
+            "name": "RSS Feed Read",
+            "type": "n8n-nodes-base.rssFeedRead",
+            "typeVersion": 1,
+            "position": [
+                600,
+                240
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "http://localhost:3000/api/analyze-news",
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "{\n  \"news_text\": \"{{ $json.title }}. {{ $json.contentSnippet }}\"\n}",
+                "options": {}
+            },
+            "id": "9d8e3456-7890-6543-1cde-f23456789abc",
+            "name": "Analyze News API",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                820,
+                240
+            ]
+        }
+    ],
+    "connections": {
+        "Schedule Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "RSS Feed Read",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "RSS Feed Read": {
+            "main": [
+                [
+                    {
+                        "node": "Analyze News API",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "active": false,
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "versionId": "f7a8b9c0-d1e2-43f4-b5a6-c7d8e9f0a1b2",
+    "id": "financial_news_automation",
+    "tags": []
+}

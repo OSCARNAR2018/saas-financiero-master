@@ -1,0 +1,201 @@
+{
+    "name": "Yahoo Finance RSS - Batching & Rate Limit Fix",
+    "nodes": [
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "minutes",
+                            "minutesInterval": 15
+                        }
+                    ]
+                }
+            },
+            "id": "e7d17290-77a8-4475-bc2b-f9f30b9f5e2a",
+            "name": "Schedule Trigger",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1.1,
+            "position": [
+                0,
+                400
+            ]
+        },
+        {
+            "parameters": {
+                "url": "https://finance.yahoo.com/news/rssindex"
+            },
+            "id": "b6f5d4c3-e2f1-4a0b-9c8d-7e6f5d4c3b2a",
+            "name": "RSS Read Yahoo Finance",
+            "type": "n8n-nodes-base.rssFeedRead",
+            "typeVersion": 1,
+            "position": [
+                220,
+                400
+            ]
+        },
+        {
+            "parameters": {
+                "batchSize": 10,
+                "options": {}
+            },
+            "id": "a1b2c3d4-e5f6-4a5b-b6c7-d8e9f0a1b2c3",
+            "name": "Split In Batches",
+            "type": "n8n-nodes-base.splitInBatches",
+            "typeVersion": 3,
+            "position": [
+                440,
+                400
+            ]
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $json.title }} - {{ $json.contentSnippet }}",
+                "options": {
+                    "systemMessage": "Eres un analista financiero de Hedge Fund. Analiza el título y descripción de la noticia. Devuelve EXCLUSIVAMENTE un JSON con: {\"ticker\": \"TICKER\", \"headline\": \"resumen en español\", \"sentiment_score\": número de -10 a 10, \"sentiment_label\": \"ALCISTA/BAJISTA/NEUTRAL\", \"reasoning\": \"justificación técnica\"}."
+                }
+            },
+            "id": "7c8d9e0f-1a2b-3c4d-5e6f-7a8b9c0d1e2f",
+            "name": "Google Gemini (Rate Optimized)",
+            "type": "@n8n/n8n-nodes-langchain.chainLlm",
+            "typeVersion": 1.4,
+            "position": [
+                660,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "try {\n  const rawResponse = $json.text;\n  const jsonMatch = rawResponse.match(/\\{.*\\}/s);\n  const data = JSON.parse(jsonMatch ? jsonMatch[0] : rawResponse);\n  \n  return {\n    ticker: data.ticker || 'UNKNOWN',\n    headline: data.headline || 'Sin resumen',\n    sentiment_score: parseInt(data.sentiment_score) || 0,\n    sentiment_label: data.sentiment_label || 'NEUTRAL',\n    reasoning: data.reasoning || 'Sin justificación',\n    raw_json: data\n  };\n} catch (e) {\n  return {\n    ticker: 'ERROR',\n    headline: 'Error al parsear',\n    sentiment_score: 0,\n    sentiment_label: 'ERROR',\n    reasoning: e.message,\n    raw_json: { error: e.message, raw: $json.text }\n  };\n}"
+            },
+            "id": "f1e2d3c4-b5a6-4a7b-8c9d-0e1f2a3b4c5d",
+            "name": "Extract JSON",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                880,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "insert",
+                "tableId": "news_analysis",
+                "columns": {
+                    "mappingMode": "defineForm",
+                    "value": {
+                        "ticker": "={{ $json.ticker }}",
+                        "headline": "={{ $json.headline }}",
+                        "sentiment_score": "={{ $json.sentiment_score }}",
+                        "sentiment_label": "={{ $json.sentiment_label }}",
+                        "reasoning": "={{ $json.reasoning }}",
+                        "raw_json": "={{ $json.raw_json }}"
+                    }
+                },
+                "options": {}
+            },
+            "id": "c3b2a1d0-e9f8-4a7b-6c5d-4e3f2d1c0b9a",
+            "name": "Supabase Insert",
+            "type": "n8n-nodes-base.supabase",
+            "typeVersion": 1,
+            "position": [
+                1100,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "amount": 65,
+                "unit": "seconds"
+            },
+            "id": "d1c2b3a4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+            "name": "Wait (Rate Limit)",
+            "type": "n8n-nodes-base.wait",
+            "typeVersion": 1.1,
+            "position": [
+                1320,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Schedule Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "RSS Read Yahoo Finance",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "RSS Read Yahoo Finance": {
+            "main": [
+                [
+                    {
+                        "node": "Split In Batches",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Split In Batches": {
+            "main": [
+                [
+                    {
+                        "node": "Google Gemini (Rate Optimized)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Google Gemini (Rate Optimized)": {
+            "main": [
+                [
+                    {
+                        "node": "Extract JSON",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Extract JSON": {
+            "main": [
+                [
+                    {
+                        "node": "Supabase Insert",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Supabase Insert": {
+            "main": [
+                [
+                    {
+                        "node": "Wait (Rate Limit)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Wait (Rate Limit)": {
+            "main": [
+                [
+                    {
+                        "node": "Split In Batches",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

@@ -64,7 +64,15 @@ export default function LoginPage() {
                         </div>
 
                         <div className="relative group">
-                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block ml-1">Contraseña</label>
+                            <div className="flex justify-between items-center mb-1 ml-1">
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Contraseña</label>
+                                <Link
+                                    href="/forgot-password"
+                                    className="text-[10px] font-bold text-blue-400 hover:text-blue-300 uppercase tracking-widest transition-colors"
+                                >
+                                    ¿Olvidaste tu contraseña?
+                                </Link>
+                            </div>
                             <div className="relative">
                                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors" size={18} />
                                 <input
